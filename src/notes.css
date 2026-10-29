@@ -417,3 +417,34 @@ textarea:focus {
         animation-duration: 0.01ms !important;
     }
 }
+
+.note-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+.note-actions .button {
+    padding: 7px 12px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+}
+
+.edit-note {
+    background-color: #0f766e;
+    border-color: #0f766e;
+}
+
+.edit-note:hover {
+    background-color: #115e59;
+}
+
+.delete-note {
+    background-color: #dc2626;
+    border-color: #dc2626;
+}
+
+.delete-note:hover {
+    background-color: #b91c1c;
+}
