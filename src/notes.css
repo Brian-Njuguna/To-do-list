@@ -448,3 +448,126 @@ textarea:focus {
 .delete-note:hover {
     background-color: #b91c1c;
 }
+
+/* Project list */
+.projects_list {
+    list-style: none;
+    padding: 0;
+    margin: 12px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* Each project row */
+.project {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+/* Folder icon */
+.project img {
+    flex-shrink: 0;
+    object-fit: contain;
+}
+
+/* Project name */
+.project_link {
+    flex: 1;
+    min-width: 0;
+    color: #333;
+    text-decoration: none;
+    overflow-wrap: anywhere;
+    font-size: 0.95rem;
+}
+
+/* Hover effect */
+.project:hover {
+    background-color: #f0f2f5;
+}
+
+/* Selected project highlight */
+.project.selected-project {
+    background-color: #dbeafe;
+    border-color: #93c5fd;
+}
+
+/* Selected project name */
+.project.selected-project .project_link {
+    color: #1d4ed8;
+    font-weight: 700;
+}
+
+/* Buttons beside each project */
+.project-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+/* Add and delete buttons */
+.project-actions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 26px;
+    height: 26px;
+    padding: 2px 6px;
+    border: none;
+    border-radius: 5px;
+    background: transparent;
+    font-size: 1rem;
+    cursor: pointer;
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease;
+}
+
+/* Add note button */
+.project-actions .add-project-note {
+    color: #15803d;
+    font-weight: 700;
+}
+
+.project-actions .add-project-note:hover {
+    background-color: #dcfce7;
+}
+
+/* Delete project button */
+.project-actions .delete-project {
+    color: #dc2626;
+    font-size: 1.25rem;
+}
+
+.project-actions .delete-project:hover {
+    background-color: #fee2e2;
+}
+
+/* General Notes cannot be deleted */
+.project-actions .delete-project:disabled {
+    opacity: 0.25;
+    cursor: not-allowed;
+}
+
+/* Keep the selected highlight when hovering */
+.project.selected-project:hover {
+    background-color: #bfdbfe;
+}
+
+/* Keyboard accessibility */
+.project_link:focus-visible,
+.project-actions button:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+}

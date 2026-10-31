@@ -1,3 +1,4 @@
+
 import folderIcon from "./assets/folder.png";
 
 // Create a note object
@@ -19,24 +20,20 @@ function getSavedNotes() {
 
         notes.forEach(note => {
             if (!note.id) {
-                note.id = `${Date.now()}-${Math.random()
-                    .toString(36).slice(2)}`;
+                note.id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
                 changed = true;
             }
 
-            // Keep older notes visible in General Notes.
             if (!note.projectName) {
                 note.projectName = "General Notes";
                 changed = true;
             }
 
-            // Give older notes a default description if needed.
             if (note.description === undefined) {
                 note.description = "";
                 changed = true;
             }
 
-            // Give older notes a default due date if needed.
             if (note.due_date === undefined) {
                 note.due_date = "";
                 changed = true;
@@ -80,9 +77,7 @@ function saveProjects(projects) {
 
 // Validate a date in YYYY-MM-DD format
 function isValidDate(date) {
-    if (!date) {
-        return true;
-    }
+    if (!date) return true;
 
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
         return false;
@@ -100,7 +95,6 @@ function isValidDate(date) {
 function displayNote(note, mainFrame, onEdit, onDelete) {
     const colors = ["yellow", "green", "blue", "pink"];
 
-    // Preserve the note's color when it is rendered again.
     if (!note.color || !colors.includes(note.color)) {
         note.color = colors[Math.floor(Math.random() * colors.length)];
         saveNotes(getSavedNotes());
@@ -156,13 +150,10 @@ export default function createProjects() {
     const sidebar = document.querySelector(".sidebar");
 
     if (!mainFrame || !sidebar) {
-        console.error(
-            "Could not find .notes-container or .sidebar."
-        );
+        console.error("Could not find .notes-container or .sidebar.");
         return;
     }
 
-    // Prevent duplicate sidebar elements.
     sidebar.replaceChildren();
 
     let selectedProject = "General Notes";
@@ -194,9 +185,28 @@ export default function createProjects() {
         addNoteButton
     );
 
+    // Highlight the currently selected project.
+    function updateProjectHighlight() {
+        projectsList.querySelectorAll(".project").forEach(project => {
+            const isSelected =
+                project.dataset.projectName === selectedProject;
+
+            project.classList.toggle("selected-project", isSelected);
+
+            const link = project.querySelector(".project_link");
+
+            if (link) {
+                if (isSelected) {
+                    link.setAttribute("aria-current", "page");
+                } else {
+                    link.removeAttribute("aria-current");
+                }
+            }
+        });
+    }
+
     // Render notes belonging to the selected project.
     function renderProjectNotes() {
-        // Remove note cards without removing the overlapping note stack.
         mainFrame
             .querySelectorAll(".created-note")
             .forEach(note => note.remove());
@@ -208,13 +218,10 @@ export default function createProjects() {
         );
 
         projectNotes.forEach(note => {
-            displayNote(
-                note,
-                mainFrame,
-                editNote,
-                deleteNote
-            );
+            displayNote(note, mainFrame, editNote, deleteNote);
         });
+
+        updateProjectHighlight();
     }
 
     // Create and save a note.
@@ -242,9 +249,7 @@ export default function createProjects() {
         const date = dateInput.trim();
 
         if (!isValidDate(date)) {
-            alert(
-                "Enter a valid date as YYYY-MM-DD, or leave it blank."
-            );
+            alert("Enter a valid date as YYYY-MM-DD, or leave it blank.");
             return;
         }
 
@@ -264,10 +269,7 @@ export default function createProjects() {
 
     // Edit an existing note.
     function editNote(note) {
-        const titleInput = prompt(
-            "Edit note title:",
-            note.title
-        );
+        const titleInput = prompt("Edit note title:", note.title);
 
         if (titleInput === null || titleInput.trim() === "") {
             return;
@@ -294,9 +296,7 @@ export default function createProjects() {
         const date = dateInput.trim();
 
         if (!isValidDate(date)) {
-            alert(
-                "Enter a valid date as YYYY-MM-DD, or leave it blank."
-            );
+            alert("Enter a valid date as YYYY-MM-DD, or leave it blank.");
             return;
         }
 
@@ -339,10 +339,55 @@ export default function createProjects() {
         renderProjectNotes();
     }
 
-    // Add a project to the sidebar.
+    // Delete a project and preserve its notes.
+    function deleteProject(projectName) {
+        if (projectName === "General Notes") {
+            return;
+        }
+
+        const confirmed = confirm(
+            `Delete "${projectName}"? Its notes will be moved to General Notes.`
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        // Remove the project from storage.
+        const savedProjects = getSavedProjects();
+
+        const updatedProjects = savedProjects.filter(
+            name => name !== projectName
+        );
+
+        saveProjects(updatedProjects);
+
+        // Move the project's notes to General Notes.
+        const savedNotes = getSavedNotes();
+
+        savedNotes.forEach(note => {
+            if (note.projectName === projectName) {
+                note.projectName = "General Notes";
+            }
+        });
+
+        saveNotes(savedNotes);
+
+        // Switch to General Notes if necessary.
+        if (selectedProject === projectName) {
+            selectedProject = "General Notes";
+        }
+
+        // Rebuild the sidebar.
+        renderProjectsList();
+        renderProjectNotes();
+    }
+
+    // Add buttons and links for a project.
     function addProject(projectName) {
         const project = document.createElement("li");
         project.classList.add("project");
+        project.dataset.projectName = projectName;
 
         const icon = document.createElement("img");
         icon.src = folderIcon;
@@ -351,38 +396,84 @@ export default function createProjects() {
         icon.height = 18;
 
         const projectLink = document.createElement("a");
-        projectLink.classList.add(
-            "project_link",
-            "project_names"
-        );
+        projectLink.classList.add("project_link", "project_names");
         projectLink.href = "#";
         projectLink.textContent = projectName;
 
-        projectLink.addEventListener("click", function (event) {
+        projectLink.addEventListener("click", event => {
             event.preventDefault();
 
             selectedProject = projectName;
             renderProjectNotes();
         });
 
-        project.append(icon, projectLink);
+        const projectActions = document.createElement("div");
+        projectActions.classList.add("project-actions");
+
+        // Add note button for this project.
+        const addButton = document.createElement("button");
+        addButton.type = "button";
+        addButton.textContent = "+";
+        addButton.classList.add("button", "add-project-note");
+        addButton.title = `Add note to ${projectName}`;
+        addButton.setAttribute(
+            "aria-label",
+            `Add note to ${projectName}`
+        );
+
+        addButton.addEventListener("click", () => {
+            selectedProject = projectName;
+            updateProjectHighlight();
+            createNewNote();
+        });
+
+        // Delete project button.
+        const deleteButton = document.createElement("button");
+        deleteButton.type = "button";
+        deleteButton.textContent = "×";
+        deleteButton.classList.add("button", "delete-project");
+        deleteButton.title = `Delete ${projectName}`;
+        deleteButton.setAttribute(
+            "aria-label",
+            `Delete ${projectName}`
+        );
+
+        if (projectName === "General Notes") {
+            deleteButton.disabled = true;
+            deleteButton.title = "General Notes cannot be deleted";
+        }
+
+        deleteButton.addEventListener("click", () => {
+            deleteProject(projectName);
+        });
+
+        projectActions.append(addButton, deleteButton);
+        project.append(icon, projectLink, projectActions);
         projectsList.appendChild(project);
     }
 
-    // Restore saved projects when the app starts.
-    const savedProjects = getSavedProjects();
+    // Render all projects, including saved projects.
+    function renderProjectsList() {
+        projectsList.replaceChildren();
 
-    const projectNames = [
-        "General Notes",
-        ...savedProjects.filter(
-            name => name.toUpperCase() !== "GENERAL NOTES"
-        )
-    ];
+        const savedProjects = getSavedProjects();
 
-    projectNames.forEach(addProject);
+        const projectNames = [
+            "General Notes",
+            ...savedProjects.filter(
+                name => name.toUpperCase() !== "GENERAL NOTES"
+            )
+        ];
 
-    // Add a new project and save it.
-    addProjectButton.addEventListener("click", function () {
+        projectNames.forEach(addProject);
+        updateProjectHighlight();
+    }
+
+    // Restore projects when the app starts.
+    renderProjectsList();
+
+    // Add a new project.
+    addProjectButton.addEventListener("click", () => {
         const input = prompt("Enter your project name:");
 
         if (input === null || input.trim() === "") {
@@ -390,15 +481,12 @@ export default function createProjects() {
         }
 
         const projectName = input.trim().toUpperCase();
-
         const existingProjects = getSavedProjects();
 
         const alreadyExists = [
             "General Notes",
             ...existingProjects
-        ].some(
-            name => name.toUpperCase() === projectName
-        );
+        ].some(name => name.toUpperCase() === projectName);
 
         if (alreadyExists) {
             alert("Project name already taken.");
@@ -408,20 +496,19 @@ export default function createProjects() {
         existingProjects.push(projectName);
         saveProjects(existingProjects);
 
-        addProject(projectName);
-
-        // Automatically select the new project.
         selectedProject = projectName;
+
+        renderProjectsList();
         renderProjectNotes();
     });
 
-    // Add a note using the sidebar button.
+    // General Add Note button.
     addNoteButton.addEventListener("click", createNewNote);
 
     // Display General Notes when the app starts.
     renderProjectNotes();
 
-    // Let notes.js use the same note-creation function.
+    // Let other modules use the same note-creation function.
     return {
         createNewNote
     };
